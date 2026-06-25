@@ -1,0 +1,172 @@
+name: Build CSNZ Server
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: Install Qt6
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: '6.x'
+        modules: 'qtbase'
+        cache: true
+    
+    - name: Configure CMake
+      run: |
+        cmake -B ${{ github.workspace }}/build `
+          -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} `
+          -DSERVER_DBSQLITE=ON `
+          -DSERVER_PUBLIC=OFF `
+          -DSERVER_PROTECTION=OFF `
+          -DSERVER_USE_GUI=OFF `
+          -S ${{ github.workspace }}/src
+    
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.configuration }}
+    
+    - name: Upload Build Artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: CSNZ_Server-windows-${{ matrix.configuration }}
+        path: ${{ github.workspace }}/bin/CSNZ_Server.exe
+        retention-days: 30
+
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          qt6-base-dev \
+          libssl-dev \
+          libsqlite3-dev
+    
+    - name: Configure CMake
+      run: |
+        cmake -B ${{ github.workspace }}/build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} \
+          -DSERVER_DBSQLITE=ON \
+          -DSERVER_PUBLIC=OFF \
+          -DSERVER_PROTECTION=OFF \
+          -DSERVER_USE_GUI=OFF \
+          -S ${{ github.workspace }}/src
+    
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.configuration }}
+    
+    - name: Upload Build Artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: CSNZ_Server-linux-${{ matrix.configuration }}
+        path: ${{ github.workspace }}/bin/CSNZ_Server
+        retention-days: 30
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        configuration: [Debug, Release]
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        brew install cmake qt@6 openssl sqlite3
+    
+    - name: Configure CMake
+      run: |
+        cmake -B ${{ github.workspace }}/build \
+          -DCMAKE_BUILD_TYPE=${{ matrix.configuration }} \
+          -DSERVER_DBSQLITE=ON \
+          -DSERVER_PUBLIC=OFF \
+          -DSERVER_PROTECTION=OFF \
+          -DSERVER_USE_GUI=OFF \
+          -S ${{ github.workspace }}/src
+    
+    - name: Build
+      run: cmake --build ${{ github.workspace }}/build --config ${{ matrix.configuration }}
+    
+    - name: Upload Build Artifacts
+      if: success()
+      uses: actions/upload-artifact@v3
+      with:
+        name: CSNZ_Server-macos-${{ matrix.configuration }}
+        path: ${{ github.workspace }}/bin/CSNZ_Server
+        retention-days: 30
+
+  code-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: recursive
+    
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          cmake \
+          clang-tools \
+          cppcheck
+    
+    - name: Run Cppcheck
+      run: |
+        cppcheck --enable=all --suppress=missingIncludeSystem \
+          --output-file=cppcheck-report.txt \
+          src/ || true
+    
+    - name: Upload Cppcheck Report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: cppcheck-report
+        path: cppcheck-report.txt
+        retention-days: 30
+    
+    - name: Install clang-analyzer
+      run: sudo apt-get install -y clang
+    
+    - name: Run clang static analysis
+      run: |
+        scan-build --status-bugs -o clang-report cmake -B build -S src/
+        scan-build --status-bugs -o clang-report cmake --build build || true
+    
+    - name: Upload Clang Report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: clang-analysis-report
+        path: clang-report/
+        retention-days: 30
