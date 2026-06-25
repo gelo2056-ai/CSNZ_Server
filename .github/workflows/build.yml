@@ -40,7 +40,7 @@ jobs:
     
     - name: Upload Build Artifacts
       if: success()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: CSNZ_Server-windows-${{ matrix.configuration }}
         path: ${{ github.workspace }}/bin/CSNZ_Server.exe
