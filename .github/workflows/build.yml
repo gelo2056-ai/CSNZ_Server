@@ -14,12 +14,12 @@ jobs:
         configuration: [Debug, Release]
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     
     - name: Install Qt6
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
         version: '6.x'
         modules: 'qtbase'
@@ -53,7 +53,7 @@ jobs:
         configuration: [Debug, Release]
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     
@@ -82,7 +82,7 @@ jobs:
     
     - name: Upload Build Artifacts
       if: success()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: CSNZ_Server-linux-${{ matrix.configuration }}
         path: ${{ github.workspace }}/bin/CSNZ_Server
@@ -95,7 +95,7 @@ jobs:
         configuration: [Debug, Release]
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     
@@ -118,7 +118,7 @@ jobs:
     
     - name: Upload Build Artifacts
       if: success()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: CSNZ_Server-macos-${{ matrix.configuration }}
         path: ${{ github.workspace }}/bin/CSNZ_Server
@@ -128,7 +128,7 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         submodules: recursive
     
@@ -149,7 +149,7 @@ jobs:
     
     - name: Upload Cppcheck Report
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: cppcheck-report
         path: cppcheck-report.txt
@@ -165,7 +165,7 @@ jobs:
     
     - name: Upload Clang Report
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: clang-analysis-report
         path: clang-report/
